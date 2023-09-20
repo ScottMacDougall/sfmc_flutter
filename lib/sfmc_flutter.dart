@@ -62,6 +62,11 @@ class SFMCSDK {
     return result;
   }
 
+  static Future<bool?> handleMessage(Map<String, dynamic> message) async {
+    final bool? result = await _channel.invokeMethod('handleMessage', message);
+    return result;
+  }
+
   /*
   * Attribute Management
   */

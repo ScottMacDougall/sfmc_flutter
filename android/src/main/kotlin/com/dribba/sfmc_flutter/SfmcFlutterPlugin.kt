@@ -89,7 +89,14 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             result.success(setPushEnabled(true))
         } else if (call.method == "disablePush") {
             result.success(setPushEnabled(false))
-        } else if (call.method == "setPushToken") {
+        }  else if (call.method == "handleMessage"){
+            var message = call.arguments;
+            if (message == null){
+                result.error("")
+            }
+            result.success(message?.let { handleMessage(message) })
+        }
+        else if (call.method == "setPushToken") {
             val token = call.argument<String>("token")
             if (token == null) {
                 result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED")
@@ -203,12 +210,17 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     fun setPushToken(token: String): Boolean {
+        SFMCSdk.requestSdk { sdk -> sdk.mp { it.pushMessageManager.setPushToken(token) } }
+        return true
+    }
+
+    fun handleMessage(message: MutableMap<String!, String!>) : Boolean {
         SFMCSdk.requestSdk { sdk ->
             sdk.mp {
-                it.pushMessageManager.setPushToken(token)
+                it.pushMessageManager.handleMessage(message)
             }
         }
-        return true
+        return true;
     }
 
     fun removeTag(tag: String): Boolean {
