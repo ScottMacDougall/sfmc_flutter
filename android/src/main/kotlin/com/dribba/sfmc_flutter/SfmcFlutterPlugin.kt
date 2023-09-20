@@ -1,23 +1,22 @@
 package com.dribba.sfmc_flutter
 
 import android.app.Activity
-import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.annotation.NonNull
 import com.salesforce.marketingcloud.MCLogListener
 import com.salesforce.marketingcloud.MarketingCloudConfig
-import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
 import com.salesforce.marketingcloud.MarketingCloudSdk
 import com.salesforce.marketingcloud.notifications.NotificationCustomizationOptions
 import com.salesforce.marketingcloud.sfmcsdk.SFMCSdk
 import com.salesforce.marketingcloud.sfmcsdk.SFMCSdkModuleConfig
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.MethodChannel.Result
 
 private const val SFMC_NOTIFICATION_ICON_KEY = "SFCMNotificationIcon"
 
@@ -27,7 +26,9 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var context: Context
     private lateinit var activity: Activity
 
-    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onAttachedToEngine(
+            @NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
+    ) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "sfmc_flutter")
         channel.setMethodCallHandler(this)
         context = flutterPluginBinding.applicationContext
@@ -41,15 +42,15 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             val sfmcURL = call.argument<String>("sfmcURL")
             val senderId = call.argument<String>("senderId")
 
-            if (appId == null || accessToken == null || mid == null || sfmcURL == null || senderId == null) {
-                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED");
+            if (appId == null || accessToken == null || mid == null || sfmcURL == null) {
+                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED")
                 return
             }
             result.success(setupSFMC(appId, accessToken, mid, sfmcURL, senderId))
         } else if (call.method == "setContactKey") {
             val cKey = call.argument<String>("cId")
             if (cKey == null) {
-                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED");
+                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED")
                 return
             }
             result.success(setContactKey(cKey))
@@ -57,14 +58,14 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
             val tag = call.argument<String>("tag")
             if (tag == null) {
-                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED");
+                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED")
                 return
             }
             result.success(setTag(tag))
         } else if (call.method == "removeTag") {
             val tag = call.argument<String>("tag")
             if (tag == null) {
-                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED");
+                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED")
                 return
             }
             result.success(removeTag(tag))
@@ -72,30 +73,32 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             val attrName = call.argument<String>("name")
             val attrValue = call.argument<String>("value")
             if (attrName == null || attrValue == null) {
-                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED");
+                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED")
                 return
             }
             result.success(setAttribute(attrName, attrValue))
         } else if (call.method == "clearAttribute") {
             val attrName = call.argument<String>("name")
             if (attrName == null) {
-                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED");
+                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED")
             }
             result.success(attrName?.let { clearAttribute(it) })
         } else if (call.method == "pushEnabled") {
-            pushEnabled() { res ->
-                result.success(res)
-            }
+            pushEnabled() { res -> result.success(res) }
         } else if (call.method == "enablePush") {
             result.success(setPushEnabled(true))
         } else if (call.method == "disablePush") {
             result.success(setPushEnabled(false))
+        } else if (call.method == "setPushToken") {
+            val token = call.argument<String>("token")
+            if (token == null) {
+                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED")
+            }
+            result.success(token?.let { setPushToken(it) })
         } else if (call.method == "getPushToken") {
             getPushToken(result::success)
         } else if (call.method == "sdkState") {
-            getSDKState() { res ->
-                result.success(res)
-            }
+            getSDKState() { res -> result.success(res) }
         } else if (call.method == "enableVerbose") {
             result.success(setupVerbose(true))
         } else if (call.method == "disableVerbose") {
@@ -109,30 +112,44 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         channel.setMethodCallHandler(null)
     }
 
-    fun setupSFMC(appId: String, accessToken: String, mid: String, sfmcURL: String, senderId: String): Boolean {
+    fun setupSFMC(
+            appId: String,
+            accessToken: String,
+            mid: String,
+            sfmcURL: String,
+            senderId: String?
+    ): Boolean {
         val notificationIcon = getNotificationIcon()
 
-        SFMCSdk.configure(context.applicationContext, SFMCSdkModuleConfig.build {
-            pushModuleConfig = MarketingCloudConfig.builder().apply {
-                setApplicationId(appId)
-                setAccessToken(accessToken)
-                setSenderId(senderId)
-                setMarketingCloudServerUrl(sfmcURL)
-                setMid(mid)
-                setNotificationCustomizationOptions(
-                    NotificationCustomizationOptions.create(notificationIcon)
-                )
-                // Other configuration options
-            }.build(context.applicationContext)
-        }) { initStatus ->
+        SFMCSdk.configure(
+                context.applicationContext,
+                SFMCSdkModuleConfig.build {
+                    pushModuleConfig =
+                            MarketingCloudConfig.builder()
+                                    .apply {
+                                        setApplicationId(appId)
+                                        setAccessToken(accessToken)
+                                        setMarketingCloudServerUrl(sfmcURL)
+                                        setMid(mid)
+                                        setNotificationCustomizationOptions(
+                                                NotificationCustomizationOptions.create(
+                                                        notificationIcon
+                                                )
+                                        )
+                                        // Other configuration options
+                                    }
+                                    .build(context.applicationContext)
+                }
+        ) { initStatus ->
+            setupVerbose(true)
             // TODO handle initialization status
         }
         return true
     }
 
     /*
-    * Contact Key Management
-    * */
+     * Contact Key Management
+     * */
     fun setContactKey(contactKey: String): Boolean {
         MarketingCloudSdk.requestSdk { sdk ->
             val registrationManager = sdk.registrationManager
@@ -177,10 +194,18 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      */
     fun setTag(tag: String): Boolean {
         MarketingCloudSdk.requestSdk { sdk ->
-
             sdk.registrationManager.edit().run {
                 addTags(tag)
                 commit()
+            }
+        }
+        return true
+    }
+
+    fun setPushToken(token: String): Boolean {
+        SFMCSdk.requestSdk { sdk ->
+            sdk.mp {
+                it.pushMessageManager.setPushToken(token)
             }
         }
         return true
@@ -229,20 +254,14 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     fun getPushToken(onResult: (String?) -> Unit) {
-        SFMCSdk.requestSdk { sdk ->
-            sdk.mp {
-                onResult(it.pushMessageManager.pushToken)
-            }
-        }
+        SFMCSdk.requestSdk { sdk -> sdk.mp { onResult(it.pushMessageManager.pushToken) } }
     }
 
     /*
      * SDKState Management
      */
     fun getSDKState(result: (Any?) -> Unit) {
-        MarketingCloudSdk.requestSdk { sdk ->
-            result.invoke(sdk.sdkState.toString())
-        }
+        MarketingCloudSdk.requestSdk { sdk -> result.invoke(sdk.sdkState.toString()) }
     }
 
     override fun onDetachedFromActivity() = Unit
@@ -254,10 +273,11 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onDetachedFromActivityForConfigChanges() = Unit
 
     private fun getNotificationIcon(): Int {
-        val appInfo = context
-            .applicationContext
-            .packageManager
-            .getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
+        val appInfo =
+                context.applicationContext.packageManager.getApplicationInfo(
+                        context.packageName,
+                        PackageManager.GET_META_DATA
+                )
 
         val metaData = appInfo.metaData
         if (metaData.containsKey(SFMC_NOTIFICATION_ICON_KEY)) {

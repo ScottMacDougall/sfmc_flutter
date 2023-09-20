@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/services.dart';
 
 class SFMCSDK {
@@ -38,15 +39,20 @@ class SFMCSDK {
         .invokeMethod('setDeviceToken', {"deviceKey": deviceToken});
     return result;
   }
+
   static Future<String?> getDeviceToken() async {
-    final String? result = await _channel
-        .invokeMethod('getDeviceToken');
+    final String? result = await _channel.invokeMethod('getDeviceToken');
+    return result;
+  }
+
+  static Future<bool?> setPushToken(String token) async {
+    final bool? result =
+        await _channel.invokeMethod('setPushToken', {"token": token});
     return result;
   }
 
   static Future<String?> getDeviceIdentifier() async {
-    final String? result = await _channel
-        .invokeMethod('getDeviceIdentifier');
+    final String? result = await _channel.invokeMethod('getDeviceIdentifier');
     return result;
   }
 
@@ -105,7 +111,7 @@ class SFMCSDK {
   }
 
   static Future<String?> getPushToken() =>
-    _channel.invokeMethod('getPushToken');
+      _channel.invokeMethod('getPushToken');
 
   /*
   * SDK State Management
@@ -122,11 +128,11 @@ class SFMCSDK {
     final bool? result = await _channel.invokeMethod('enableWatchingLocation');
     return result;
   }
+
   static Future<bool?> disableLocationWatching() async {
     final bool? result = await _channel.invokeMethod('disableWatchingLocation');
     return result;
   }
-
 
 /*
   * Verbose Management
