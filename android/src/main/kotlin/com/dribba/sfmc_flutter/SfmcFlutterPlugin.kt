@@ -90,7 +90,7 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         } else if (call.method == "disablePush") {
             result.success(setPushEnabled(false))
         }  else if (call.method == "handleMessage"){
-            var message = call.arguments;
+            var message = call.arguments<MutableMap<String!, String!>>;
             if (message == null){
                 result.error("")
             }
