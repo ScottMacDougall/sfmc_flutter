@@ -92,7 +92,7 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }  else if (call.method == "handleMessage"){
             var message = call.arguments<MutableMap<String!, String!>>;
             if (message == null){
-                result.error("")
+                result.error("ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED", "ARGS_NOT_ALLOWED")
             }
             result.success(message?.let { handleMessage(message) })
         }
