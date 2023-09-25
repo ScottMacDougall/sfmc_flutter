@@ -34,6 +34,10 @@ class SFMCSDK {
     return result;
   }
 
+  static void setHandler(Future<dynamic> Function(MethodCall call)? handler) {
+    _channel.setMethodCallHandler(handler);
+  }
+
   static Future<bool?> setDeviceToken(String deviceToken) async {
     final bool? result = await _channel
         .invokeMethod('setDeviceToken', {"deviceKey": deviceToken});
