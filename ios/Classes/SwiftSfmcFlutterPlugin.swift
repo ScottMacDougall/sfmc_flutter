@@ -9,7 +9,7 @@ public class SwiftSfmcFlutterPlugin: NSObject, FlutterPlugin, InAppMessageEventD
     public static func register(with registrar: FlutterPluginRegistrar) {
         channel = FlutterMethodChannel(name: "sfmc_flutter", binaryMessenger: registrar.messenger())
         let instance = SwiftSfmcFlutterPlugin()
-        registrar.addMethodCallDelegate(instance, channel: channel)
+        registrar.addMethodCallDelegate(instance, channel: channel!)
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
