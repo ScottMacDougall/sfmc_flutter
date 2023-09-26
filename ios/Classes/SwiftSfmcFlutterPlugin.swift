@@ -4,8 +4,10 @@ import SFMCSDK
 import MarketingCloudSDK
 
 public class SwiftSfmcFlutterPlugin: NSObject, FlutterPlugin, InAppMessageEventDelegate, URLHandlingDelegate, MarketingCloudSDKEventDelegate {
+    static var channel:FlutterMethodChannel?
+
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "sfmc_flutter", binaryMessenger: registrar.messenger())
+        channel = FlutterMethodChannel(name: "sfmc_flutter", binaryMessenger: registrar.messenger())
         let instance = SwiftSfmcFlutterPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
@@ -123,8 +125,6 @@ public class SwiftSfmcFlutterPlugin: NSObject, FlutterPlugin, InAppMessageEventD
     }
     
     public func setupSFMC(appId: String, accessToken: String, mid: String, sfmcURL: String, locationEnabled: Bool?, inboxEnabled: Bool?, analyticsEnabled: Bool?, delayRegistration: Bool?, onDone: (_ result: Bool, _ message: String?, _ code: Int?) -> Void) {
-        SFMCSdk.mp.tearDown()
-
        let builder = PushConfigBuilder(appId: appId)
             .setAccessToken(accessToken)
             .setMarketingCloudServerUrl(URL(string: sfmcURL)!)
@@ -255,23 +255,8 @@ public class SwiftSfmcFlutterPlugin: NSObject, FlutterPlugin, InAppMessageEventD
      * URL Handling
      */
     public func sfmc_handleURL(_ url: URL, type: String) {
-        if UIApplication.shared.canOpenURL(url) == true {
-            if #available(iOS 10.0, *) {
-                UIApplication.shared.open(url, options: [:], completionHandler: { success in
-                    if success {
-                        print("url \(url) opened successfully")
-                    } else {
-                        print("url \(url) could not be opened")
-                    }
-                })
-            } else {
-                if UIApplication.shared.openURL(url) == true {
-                    print("url \(url) opened successfully")
-                } else {
-                    print("url \(url) could not be opened")
-                }
-            }
-        }
+        SwiftSfmcFlutterPlugin.channel!.invokeMethod("handle_url" , arguments:  [ "url":url.absoluteString])
+
     }
     
     /*
