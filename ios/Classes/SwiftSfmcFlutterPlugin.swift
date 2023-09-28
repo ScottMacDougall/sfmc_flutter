@@ -10,6 +10,7 @@ public class SwiftSfmcFlutterPlugin: NSObject, FlutterPlugin, InAppMessageEventD
         channel = FlutterMethodChannel(name: "sfmc_flutter", binaryMessenger: registrar.messenger())
         let instance = SwiftSfmcFlutterPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel!)
+        registrar.addApplicationDelegate(instance)
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -269,4 +270,76 @@ public class SwiftSfmcFlutterPlugin: NSObject, FlutterPlugin, InAppMessageEventD
     public func sfmc_didClose(inAppMessage message: [AnyHashable : Any]) {
         // message closed
     }
+
+
+    public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [AnyHashable : Any] = [:]) -> Bool {
+        // When the app is terminated/killed state
+        //    -> when a push notification is received
+        //    -> launch the app from Push notification
+        //    -> the SDK would have not initialized yet
+        // The notification object should be persisted and set back to the MarketingCloudSDK when ready
+        // getNotifUserInfoFromAppDelegate() method sets the notification object to SDK once it is operational.
+        
+        if launchOptions[UIApplication.LaunchOptionsKey.remoteNotification] != nil {
+            let notification = launchOptions[UIApplication.LaunchOptionsKey.remoteNotification] as? [AnyHashable: Any]
+            self.notificationUserInfo = notification
+        }
+        
+        return true
+    }
+    
+    // This is to set the notification object to SDK when the SDK is ready.
+    func getNotifUserInfoFromAppDelegate() {
+        if let notificationUserInfo_ = self.notificationUserInfo {
+            SFMCSdk.mp.setNotificationUserInfo(notificationUserInfo_)
+        } else {
+            debugPrint("No notification UserInfo: - either it should be a direct launch or Notification userInfo is not available when launched from notification")
+        }
+    }
+    
+    // MobilePush SDK: REQUIRED IMPLEMENTATION
+    public func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        SFMCSdk.mp.setDeviceToken(deviceToken)
+    }
+    
+    // MobilePush SDK: REQUIRED IMPLEMENTATION
+    public func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print(error)
+    }
+    
+    // MobilePush SDK: REQUIRED IMPLEMENTATION
+    /** This delegate method offers an opportunity for applications with the "remote-notification" background mode to fetch appropriate new data in response to an incoming remote notification. You should call the fetchCompletionHandler as soon as you're finished performing that operation, so the system can accurately estimate its power and data cost. This method will be invoked even if the application was launched or resumed because of the remote notification. The respective delegate methods will be invoked first. Note that this behavior is in contrast to application:didReceiveRemoteNotification:, which is not called in those cases, and which will not be invoked if this method is implemented. **/
+    public func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) -> Bool{
+        SFMCSdk.mp.setNotificationUserInfo(userInfo)
+        
+        completionHandler(.newData)
+        return true
+    }
+}
+
+// MobilePush SDK: REQUIRED IMPLEMENTATION
+extension SwiftSfmcPlugin: UNUserNotificationCenterDelegate {
+    
+    // The method will be called on the delegate when the user responded to the notification by opening the application, dismissing the notification or choosing a UNNotificationAction. The delegate must be set before the application returns from applicationDidFinishLaunching:.
+    public func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        let userInfo = response.notification.request.content.userInfo
+        if (userInfo["_sid"] as? String) == "SFMC" {
+            
+            // Required: tell the MarketingCloudSDK about the notification. This will collect MobilePush analytics
+            // and process the notification on behalf of your application.
+            SFMCSdk.mp.setNotificationRequest(response.notification.request)
+            
+            completionHandler()
+        }
+    }
+    
+    // The method will be called on the delegate only if the application is in the foreground. If the method is not implemented or the handler is not called in a timely manner then the notification will not be presented. The application can choose to have the notification presented as a sound, badge, alert and/or in the notification list. This decision should be based on whether the information in the notification is otherwise visible to the user.
+    public func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        let userInfo = notification.request.content.userInfo
+        // Check _sid to "SFMC" to make sure we only handle messages from SFMC
+        if (userInfo["_sid"] as? String) == "SFMC" {
+            completionHandler(.alert)
+        }
+    }
+    
 }

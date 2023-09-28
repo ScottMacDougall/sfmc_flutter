@@ -1,13 +1,18 @@
 package com.dribba.sfmc_flutter
 
 import android.app.Activity
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.text.TextUtils
 import androidx.annotation.NonNull
 import com.salesforce.marketingcloud.MCLogListener
 import com.salesforce.marketingcloud.MarketingCloudConfig
 import com.salesforce.marketingcloud.MarketingCloudSdk
 import com.salesforce.marketingcloud.notifications.NotificationCustomizationOptions
+import com.salesforce.marketingcloud.notifications.NotificationManager
 import com.salesforce.marketingcloud.sfmcsdk.SFMCSdk
 import com.salesforce.marketingcloud.sfmcsdk.SFMCSdkModuleConfig
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -17,6 +22,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import java.util.Random
 
 private const val SFMC_NOTIFICATION_ICON_KEY = "SFCMNotificationIcon"
 
@@ -139,8 +145,36 @@ class SfmcFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                                         setMid(mid)
                                         setNotificationCustomizationOptions(
                                                 NotificationCustomizationOptions.create(
-                                                        notificationIcon
+                                                        notificationIcon,
+                                                        NotificationManager.NotificationLaunchIntentProvider { context, notificationMessage ->
+                                                            val requestCode = Random().nextInt()
+                                                            val url = notificationMessage.url
+                                                            when {
+                                                                url.isNullOrEmpty() ->
+                                                                    PendingIntent.getActivity(
+                                                                            context,
+                                                                            requestCode,
+                                                                            Intent(),
+                                                                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                                                    )
+                                                                else ->
+                                                                    PendingIntent.getActivity(
+                                                                            context,
+                                                                            requestCode,
+                                                                            Intent(Intent.ACTION_VIEW, Uri.parse(url)),
+                                                                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                                                    )
+                                                            }
+                                                        },
+                                                        NotificationManager.NotificationChannelIdProvider { context, notificationMessage ->
+                                                            if (TextUtils.isEmpty(notificationMessage.url)) {
+                                                                NotificationManager.createDefaultNotificationChannel(context)
+                                                            } else {
+                                                                "UrlNotification"
+                                                            }
+                                                        }
                                                 )
+
                                         )
                                         // Other configuration options
                                     }
