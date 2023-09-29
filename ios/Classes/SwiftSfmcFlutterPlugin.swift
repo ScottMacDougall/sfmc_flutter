@@ -5,6 +5,7 @@ import MarketingCloudSDK
 
 public class SwiftSfmcFlutterPlugin: NSObject, FlutterPlugin, InAppMessageEventDelegate, URLHandlingDelegate, MarketingCloudSDKEventDelegate {
     static var channel:FlutterMethodChannel?
+    var notificationUserInfo:[AnyHashable:Any]?
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         channel = FlutterMethodChannel(name: "sfmc_flutter", binaryMessenger: registrar.messenger())
@@ -318,7 +319,7 @@ public class SwiftSfmcFlutterPlugin: NSObject, FlutterPlugin, InAppMessageEventD
 }
 
 // MobilePush SDK: REQUIRED IMPLEMENTATION
-extension SwiftSfmcPlugin: UNUserNotificationCenterDelegate {
+extension SwiftSfmcFlutterPlugin: UNUserNotificationCenterDelegate {
     
     // The method will be called on the delegate when the user responded to the notification by opening the application, dismissing the notification or choosing a UNNotificationAction. The delegate must be set before the application returns from applicationDidFinishLaunching:.
     public func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
