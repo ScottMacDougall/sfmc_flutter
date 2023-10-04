@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appId" translatable="false">4c04896b-af8b-4967-95b0-2049cffc4aa6</string>
+    <string name="accessToken" translatable="false">TyNNVRGsdXszl8dLcs0VUvDY</string>
+    <string name="mid" translatable="false">534002895</string>
+    <string name="sfmcURL" translatable="false">https://mcn94-h5ysh9gkwqcg2tlgyjcpf4.device.marketingcloudapis.com/</string>
+    <string name="senderId" translatable="false">533420398855</string>
+</resources>

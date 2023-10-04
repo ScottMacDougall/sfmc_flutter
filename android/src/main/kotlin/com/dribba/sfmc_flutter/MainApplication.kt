@@ -10,6 +10,7 @@ import com.salesforce.marketingcloud.sfmcsdk.SFMCSdk
 import com.salesforce.marketingcloud.sfmcsdk.SFMCSdkModuleConfig
 
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.text.TextUtils
@@ -19,7 +20,7 @@ import java.util.Random
 class MainApplication : FlutterApplication() {
     override fun onCreate() {
         super.onCreate()
-        setupSFMC()
+        setupSFMC(appId = getString(R.string.appId), accessToken = getString(R.string.accessToken), mid = getString(R.string.mid), sfmcURL = getString(R.string.sfmcURL), senderId = getString(R.string.senderId),)
     }
 
     fun setupSFMC(
@@ -29,8 +30,6 @@ class MainApplication : FlutterApplication() {
             sfmcURL: String,
             senderId: String?
     ): Boolean {
-        val notificationIcon = getNotificationIcon()
-
         SFMCSdk.configure(
                 applicationContext as Application,
                 SFMCSdkModuleConfig.build {
@@ -43,7 +42,7 @@ class MainApplication : FlutterApplication() {
                                         setMid(mid)
                                         setNotificationCustomizationOptions(
                                                 NotificationCustomizationOptions.create(
-                                                        notificationIcon,
+                                                        R.drawable.ic_notification,
                                                         NotificationManager.NotificationLaunchIntentProvider { context, notificationMessage ->
                                                             val requestCode = Random().nextInt()
                                                             val url = notificationMessage.url
@@ -76,10 +75,9 @@ class MainApplication : FlutterApplication() {
                                         )
                                         // Other configuration options
                                     }
-                                    .build(context.applicationContext)
+                                    .build(applicationContext)
                 }
         ) { initStatus ->
-            setupVerbose(true)
             // TODO handle initialization status
         }
         return true
