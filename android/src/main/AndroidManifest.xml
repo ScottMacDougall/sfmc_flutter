@@ -1,3 +1,4 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="com.dribba.sfmc_flutter">
+  <application android:name=".MainApplication"></application>
 </manifest>
